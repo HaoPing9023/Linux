@@ -1,24 +1,45 @@
-BIN=code
+BIN=code.exe
 CC=gcc
 SRC=code.c
-FLAGS=-o
+OBJ=code.o
+LFLAGS=-o
+FLAGS=-c
 RM=rm -f
 
-$(BIN):$(SRC)
-	$(CC) $(FLAGS) $(BIN) $(SRC)
+$(BIN):$(OBJ)
+	@$(CC) $(LFLAGS) $@ $^
+	@echo "linking ... $^ to $@"
 
-.PHONY:
+%.o:%.c
+	@$(CC) $(FLAGS) $<
+	@echo "compling ... $< to $@"
+
+.PHONY:clean
 clean:
-	$(RM) $(BIN)
-	
-.PHONY:test
-test:
-	@echo $(BIN)
-	@echo $(CC)
-	@echo $(SRC)
-	@echo $(FLAGS)
-	@echo $(RM)
+	$(RM) $(OBJ) $(BIN)
 
+
+
+
+
+
+#$(BIN):$(SRC)
+#	@$(CC) $(FLAGS) $@ $^
+#	@echo "linking ... $^ to $@"
+#
+#.PHONY:
+#clean:
+#	@$(RM) $(BIN)
+#	@echo "remove ... $(BIN)"
+#	
+#.PHONY:test
+#test:
+#	@echo $(BIN)
+#	@echo $(CC)
+#	@echo $(SRC)
+#	@echo $(FLAGS)
+#	@echo $(RM)
+#
 
 #hello:hello.o
 #	gcc hello.o -o hello

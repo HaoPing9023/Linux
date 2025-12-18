@@ -1,7 +1,7 @@
 BIN=code.exe
 CC=gcc
-SRC=code.c
-OBJ=code.o
+SRC=$(shell ls *.c)
+OBJ=$(SRC:.c=.o)
 LFLAGS=-o
 FLAGS=-c
 RM=rm -f
@@ -9,7 +9,6 @@ RM=rm -f
 $(BIN):$(OBJ)
 	@$(CC) $(LFLAGS) $@ $^
 	@echo "linking ... $^ to $@"
-
 %.o:%.c
 	@$(CC) $(FLAGS) $<
 	@echo "compling ... $< to $@"
@@ -18,7 +17,10 @@ $(BIN):$(OBJ)
 clean:
 	$(RM) $(OBJ) $(BIN)
 
-
+.PHONY:test
+test:
+	@ehco $(SRC)
+	@echo $(OBJ)
 
 
 

@@ -5,7 +5,7 @@ OBJ=$(SRC:.c=.o)
 $(BIN):$(OBJ)
 	gcc -o $@ $^
 %.o:%.c
-	gcc -c $<
+	gcc -c $< -std=gnu99
 
 .PHONY:
 clean:

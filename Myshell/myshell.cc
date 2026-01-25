@@ -2,9 +2,12 @@
 #include<cstdio>
 #include<cstdlib>
 #include<cstring>
+#include<fcntl.h>
+#include<sys/stat.h>
 #include<sys/types.h>
 #include<sys/wait.h>
 #include<unistd.h>
+#include<unordered_map>
 
 using namespace std;
 
@@ -20,6 +23,18 @@ int g_argc;
 #define MAX_ENVS 100
 char* g_env[MAX_ENVS];
 int g_envs;
+
+//3. 别名映射表
+std::unordered_map<std::string, std::string> alias_list;
+
+//4. 关于重定向
+#define NONE_REDIR 0
+#define INPUT_REDIR 1
+#define OUTPUT_REDIR 2
+#define APPEND_REDIR 3
+
+int redir = NONE_REDIR;
+string filename;
 
 //当前绝对路径
 char cwd[1024];
@@ -139,7 +154,9 @@ void Cd()
     {
         string where = g_argv[1];
         if(where == "-")
-        {}
+        {
+            //
+        }
         else if(where == "~")
         {
             //
@@ -206,6 +223,32 @@ void Execute()
     if(id == 0)
     {
         //child
+        //子进程检测重定向情况
+        int fp = -1;
+        if (redir == INPUT_REDIR)
+        {
+            fp = open(filename.c_str(), O_RDONLY);
+            if (fp < 0) exit(1);
+            
+            dup2(fp, 0);
+            close(fp);
+        }
+        else if (redir == OUTPUT_REDIR)
+        {
+            fp = open(filename.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0666);
+            if (fp < 0) exit(2);
+
+            dup2(fp, 1);
+            close(fp);
+        }
+        else if (redir == APPEND_REDIR)
+        {
+            fp = open(filename.c_str(), O_CREAT | O_WRONLY | O_APPEND, 0666);
+            if (fp < 0) exit(2);
+
+            dup2(fp, 1);
+            close(fp);
+        }
         execvp(g_argv[0], g_argv);
         exit(1);
     }
@@ -218,6 +261,54 @@ void Execute()
     }
 }
 
+void TrimSpace(char cmd[], int& end)
+{
+    while (isspace(cmd[end]))
+        end++;
+}
+
+void RedirCheck(char cmd[])
+{
+    redir = NONE_REDIR;
+    filename.clear();
+
+    int start = 0;
+    int end = strlen(cmd) - 1;
+    
+    //"ls -a -l >> file.txt" > >> <
+    while (start < end)
+    {
+        if (cmd[end] == '<')
+        {
+            cmd[end++] = '\0';
+            TrimSpace(cmd, end);
+            redir = INPUT_REDIR;
+            filename = cmd + end;
+            break;
+        }
+        else if (cmd[end] == '>')
+        {
+            if (end > start && cmd[end - 1] == '>')
+            {
+                // >>
+                redir = APPEND_REDIR;
+            }
+            else
+            {
+                // >
+                redir = OUTPUT_REDIR;
+            }
+            cmd[end++] = '\0';
+            TrimSpace(cmd, end);
+            filename = cmd + end;
+        }
+        else
+        {
+            end--;
+        }
+    }
+}
+
 int main()
 {
 	//shell 启动的时候，从系统中获取环境变量
@@ -226,23 +317,27 @@ int main()
 
     while(true)
     {
-		// 1. 输出命令行提示符
+		//1. 输出命令行提示符
         PrintCommandLine();
 
-		// 2. 获取用户输入的命令
+		//2. 获取用户输入的命令
         char commandline[COMMAND_SIZE];
         if(!GetCommandLine(commandline, sizeof(commandline)))
             continue;
 
-		 // 3. 命令行分析 "ls -a -l" -> "ls" "-a" "-l"
+        //3. 重定向分析 "ls -a -l > file.txt" -> "ls -a -l" "file.txt" -> 判定重定向方式
+        RedirCheck(commandline);
+        
+
+		 //4. 命令行分析 "ls -a -l" -> "ls" "-a" "-l"
         if(!CommandParse(commandline))
             continue;
 
-        // 4. 检测并处理内键命令
+        //5. 检测并处理内键命令
         if(CheckAndExecBuiltin())
             continue;
 		
-		// 5. 执行命令	
+		//6. 执行命令	
         Execute();
     }
     return 0;

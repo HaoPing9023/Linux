@@ -1,0 +1,7 @@
+total 56
+drwxrwxr-x  2 haoping haoping  4096 Jan 25 18:47 .
+drwxrwxr-x 14 haoping haoping  4096 Jan 25 09:11 ..
+-rw-rw-r--  1 haoping haoping     0 Jan 25 18:47 log.txt
+-rw-rw-r--  1 haoping haoping    79 Jan 23 16:23 Makefile
+-rwxrwxr-x  1 haoping haoping 36168 Jan 25 18:45 myshell
+-rw-r--r--  1 haoping haoping  6991 Jan 25 18:43 myshell.cc

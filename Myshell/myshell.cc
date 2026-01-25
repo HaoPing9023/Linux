@@ -291,6 +291,7 @@ void RedirCheck(char cmd[])
             if (end > start && cmd[end - 1] == '>')
             {
                 // >>
+                cmd[end - 1] = '\0';
                 redir = APPEND_REDIR;
             }
             else
